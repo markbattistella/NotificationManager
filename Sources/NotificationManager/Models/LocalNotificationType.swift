@@ -34,7 +34,9 @@ public enum LocalNotificationType {
     /// - Parameters:
     ///   - region: The circular region monitored for notification delivery.
     ///   - repeats: Indicates whether the trigger repeats each time the region boundary is crossed.
+    #if os(iOS) || os(watchOS)
     case location(region: CLCircularRegion, repeats: Bool)
+    #endif
 }
 
 public extension LocalNotificationType {
