@@ -8,6 +8,7 @@ import Foundation
 import SimpleLogger
 @_exported import UserNotifications
 
+@MainActor
 @Observable
 public final class NotificationManager {
 

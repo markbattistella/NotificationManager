@@ -10,7 +10,7 @@ import NotificationManager
 ///
 /// A category groups related notification actions and is referenced by scheduled notifications
 /// that support user interaction.
-enum DemoCategory: NotificationCategoryDefinition {
+enum DemoCategory: NotificationCategoryDefinition, Sendable {
 
     /// A reminder-style notification category.
     case reminder

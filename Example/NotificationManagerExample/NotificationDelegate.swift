@@ -31,12 +31,12 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     ///
     /// This implementation ensures banners, list entries, and sounds are shown even while the app
     /// is active.
-    func userNotificationCenter(
+    private func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler:
         @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
+    ) async {
         completionHandler([.banner, .list, .sound])
     }
 
@@ -49,11 +49,11 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     ///
     /// This method routes to detail views, schedules snoozed alerts, or performs no action
     /// depending on the tapped button.
-    func userNotificationCenter(
+    private func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
+    ) async {
 
         let info = response.notification.request.content.userInfo
 
