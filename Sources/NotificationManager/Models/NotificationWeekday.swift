@@ -8,7 +8,7 @@ import Foundation
 
 /// A calendar-aware representation of a weekday.
 ///
-/// `Weekday` wraps the integer-based weekday value used by `DateComponents` and
+/// `NotificationWeekday` wraps the integer-based weekday value used by `DateComponents` and
 /// `UNCalendarNotificationTrigger`, where valid values range from **1 through 7**.
 ///
 /// The mapping always corresponds to the order of ``Calendar/weekdaySymbols``—that is:
@@ -19,15 +19,15 @@ import Foundation
 /// calendars may begin their week on different days, Apple guarantees that weekday indices always
 /// map to the fixed `weekdaySymbols` order.
 ///
-/// `Weekday` provides convenience constants such as ``sunday`` and ``monday`` for ease of use,
+/// `NotificationWeekday` provides convenience constants such as ``sunday`` and ``monday`` for ease of use,
 /// along with support for iteration via ``CaseIterable``.
 ///
 /// Example:
 /// ```swift
-/// let day = Weekday(2)
+/// let day = NotificationWeekday(2)
 /// print(day.name) // "Monday" in the current locale
 /// ```
-public struct Weekday: Hashable, CaseIterable {
+public struct NotificationWeekday: Hashable, CaseIterable {
 
     /// The 1-based weekday value (1–7), matching `Calendar.weekdaySymbols`.
     ///
@@ -56,8 +56,8 @@ public struct Weekday: Hashable, CaseIterable {
     /// A collection of all weekday values from **1 to 7**, in order.
     ///
     /// The sequence corresponds directly to `Calendar.weekdaySymbols`.
-    public static var allCases: [Weekday] {
-        (1...7).map { Weekday($0) }
+    public static var allCases: [NotificationWeekday] {
+        (1...7).map { NotificationWeekday($0) }
     }
 
     /// The localized full name of the weekday.
@@ -76,26 +76,26 @@ public struct Weekday: Hashable, CaseIterable {
 
 // MARK: - Convenience static constants
 
-public extension Weekday {
+public extension NotificationWeekday {
 
     /// The weekday representing Sunday (`1` in the system calendar).
-    static var sunday: Weekday { Weekday(1) }
+    static var sunday: NotificationWeekday { NotificationWeekday(1) }
 
     /// The weekday representing Monday (`2` in the system calendar).
-    static var monday: Weekday { Weekday(2) }
+    static var monday: NotificationWeekday { NotificationWeekday(2) }
 
     /// The weekday representing Tuesday (`3` in the system calendar).
-    static var tuesday: Weekday { Weekday(3) }
+    static var tuesday: NotificationWeekday { NotificationWeekday(3) }
 
     /// The weekday representing Wednesday (`4` in the system calendar).
-    static var wednesday: Weekday { Weekday(4) }
+    static var wednesday: NotificationWeekday { NotificationWeekday(4) }
 
     /// The weekday representing Thursday (`5` in the system calendar).
-    static var thursday: Weekday { Weekday(5) }
+    static var thursday: NotificationWeekday { NotificationWeekday(5) }
 
     /// The weekday representing Friday (`6` in the system calendar).
-    static var friday: Weekday { Weekday(6) }
+    static var friday: NotificationWeekday { NotificationWeekday(6) }
 
     /// The weekday representing Saturday (`7` in the system calendar).
-    static var saturday: Weekday { Weekday(7) }
+    static var saturday: NotificationWeekday { NotificationWeekday(7) }
 }

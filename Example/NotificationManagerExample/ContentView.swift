@@ -12,22 +12,22 @@ import NotificationManager
 /// Displays pending requests, allows users to schedule repeating weekday reminders, and responds
 /// to navigation driven by the notification router.
 struct ContentView: View {
-
+    
     /// The shared notification manager from the environment.
     @Environment(NotificationManager.self) private var notifications
-
+    
     /// The router used to handle navigation triggered by notifications.
     @Environment(NotificationRouter.self) private var router
-
+    
     /// The list of pending notification requests currently scheduled.
     @State private var pending: [UNNotificationRequest] = []
-
+    
     /// The selected time used when scheduling new reminders.
     @State private var reminderTime = Date()
-
+    
     /// The set of weekdays chosen for repeating reminders.
-    @State private var selectedDays: Set<Weekday> = [.monday, .wednesday, .friday]
-
+    @State private var selectedDays: Set<NotificationWeekday> = [.monday, .wednesday, .friday]
+    
     var body: some View {
         NavigationStack(
             path: Binding(
@@ -42,35 +42,37 @@ struct ContentView: View {
                     }
                     Text("Granted: \(notifications.permissionGranted.description)")
                 }
-
+                
                 Section("Repeating Weekday Reminder") {
                     DatePicker(
                         "Time",
                         selection: $reminderTime,
                         displayedComponents: .hourAndMinute
                     )
-
+                    
                     WeekdayPicker(selectedDays: $selectedDays)
-
+                    
                     Button("Schedule Repeating Reminder") {
                         Task {
                             let comps = Calendar.current
                                 .dateComponents([.hour, .minute], from: reminderTime)
-
-                            await notifications.scheduleRepeatingWeekdays(
-                                id: "weekday-reminder",
-                                title: "Weekly Reminder",
-                                body: "This is your repeating reminder!",
-                                category: DemoCategory.reminder,
-                                hour: comps.hour!,
-                                minute: comps.minute!,
-                                days: Array(selectedDays),
-                                userInfo: ["noteID": "789"]
-                            )
+                            
+                            await notifications
+                                .scheduleRepeatingWeekdays(
+                                    id: "weekday-reminder",
+                                    title: "Weekly Reminder",
+                                    body: "This is your repeating reminder!",
+                                    category: DemoCategory.reminder,
+                                    hour: comps.hour!,
+                                    minute: comps.minute!,
+                                    days: Array(selectedDays),
+                                    attachments: [],
+                                    userInfo: ["noteID": "789"]
+                                )
                         }
                     }
                 }
-
+                
                 Section("Quick Tests") {
                     Button("Fire in 10 seconds") {
                         Task {
@@ -85,7 +87,7 @@ struct ContentView: View {
                         }
                     }
                 }
-
+                
                 Section("Pending") {
                     Button("Refresh Pending") {
                         Task { await refreshPending() }
@@ -97,7 +99,7 @@ struct ContentView: View {
                         }
                     }
                 }
-
+                
                 Section("Remove") {
                     Button("Remove All Pending") {
                         notifications.removeAllPendingNotifications()
@@ -114,7 +116,7 @@ struct ContentView: View {
             .navigationTitle("Notification Demo")
         }
     }
-
+    
     /// Refreshes the list of pending notifications and updates the UI.
     ///
     /// Called when the user taps **Refresh Pending**.
@@ -129,10 +131,10 @@ struct ContentView: View {
 ///
 /// Used when navigating from a delivered notification’s action.
 struct DetailView: View {
-
+    
     /// The identifier associated with the item to display.
     let id: String
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Detail Screen")
@@ -150,12 +152,12 @@ struct DetailView: View {
 /// Displays days in fixed Sunday–Saturday order and toggles selection states
 /// by updating the bound ``selectedDays`` set.
 struct WeekdayPicker: View {
-
+    
     /// The set of weekdays currently selected.
-    @Binding var selectedDays: Set<Weekday>
-
+    @Binding var selectedDays: Set<NotificationWeekday>
+    
     /// Days presented in a fixed Sunday–Saturday order.
-    private let orderedDays: [(Weekday, String)] = [
+    private let orderedDays: [(NotificationWeekday, String)] = [
         (.sunday,    "S"),
         (.monday,    "M"),
         (.tuesday,   "Tu"),
@@ -164,7 +166,7 @@ struct WeekdayPicker: View {
         (.friday,    "F"),
         (.saturday,  "Sa")
     ]
-
+    
     var body: some View {
         HStack {
             ForEach(orderedDays, id: \.0) { day, label in
@@ -185,11 +187,11 @@ struct WeekdayPicker: View {
             }
         }
     }
-
+    
     /// Toggles the inclusion of a given weekday in ``selectedDays``.
     ///
     /// - Parameter day: The weekday to update.
-    func toggle(_ day: Weekday) {
+    func toggle(_ day: NotificationWeekday) {
         if selectedDays.contains(day) {
             selectedDays.remove(day)
         } else {

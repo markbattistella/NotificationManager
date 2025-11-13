@@ -36,3 +36,22 @@ public enum LocalNotificationType {
     ///   - repeats: Indicates whether the trigger repeats each time the region boundary is crossed.
     case location(region: CLCircularRegion, repeats: Bool)
 }
+
+public extension LocalNotificationType {
+
+    /// Returns the hour component if this is a calendar-based trigger.
+    ///
+    /// - Returns: The hour value, or `nil` for non-calendar triggers.
+    var hour: Int? {
+        if case let .calendar(_, hour, _, _) = self { return hour }
+        return nil
+    }
+
+    /// Returns the minute component if this is a calendar-based trigger.
+    ///
+    /// - Returns: The minute value, or `nil` for non-calendar triggers.
+    var minute: Int? {
+        if case let .calendar(_, _, minute, _) = self { return minute }
+        return nil
+    }
+}
