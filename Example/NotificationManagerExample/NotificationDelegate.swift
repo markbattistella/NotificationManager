@@ -5,6 +5,7 @@
 //
 
 import NotificationManager
+import SwiftUI
 
 /// Delegate responsible for handling notification presentation and user actions.
 ///
@@ -66,12 +67,19 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 
             case DemoAction.snooze.id:
                 Task {
+                    let attachment = NotificationAttachmentBuilder.Symbol(
+                        "clock.fill",
+                        foreground: .red,
+                        background: .yellow,
+                    )
+
                     await notificationManager?.schedule(
                         id: "snooze-\(UUID().uuidString)",
                         title: "Snoozed Notification",
                         body: "This is a snoozed alert.",
                         category: SnoozeCategory.oneOff,
                         type: .timeInterval(seconds: 10, repeats: false),
+                        attachments: [attachment],
                         userInfo: info
                     )
                 }

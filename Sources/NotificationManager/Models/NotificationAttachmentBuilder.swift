@@ -164,14 +164,13 @@ extension NotificationAttachmentBuilder {
 #endif
 
         guard let png = data else { return nil }
-
         do {
             try png.write(to: tempURL)
             let attachment = try UNNotificationAttachment(
                 identifier: id,
-                url: tempURL
+                url: tempURL,
+                options: [:]
             )
-            try? FileManager.default.removeItem(at: tempURL)
             return attachment
         } catch {
             print("Attachment creation failed: \(error)")

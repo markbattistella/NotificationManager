@@ -109,6 +109,7 @@ extension NotificationManager {
     ///   - category: The category definition used for custom actions.
     ///   - type: Defines whether the notification is time-interval, calendar-based, or
     ///   location-triggered.
+    ///   - sound: The notification sound to play when delivered.
     ///   - attachments: Optional attachment providers that generate `UNNotificationAttachment`
     ///   objects.
     ///   - userInfo: Arbitrary metadata attached to the request.
@@ -120,6 +121,7 @@ extension NotificationManager {
         body: String,
         category: NotificationCategoryDefinition? = nil,
         type: LocalNotificationType,
+        sound: NotificationSound = .default,
         attachments: [NotificationAttachmentProviding] = [],
         userInfo: [AnyHashable : Any] = [:]
     ) async {
@@ -131,6 +133,7 @@ extension NotificationManager {
             category: category,
             type: type,
             weekday: nil,
+            sound: sound,
             attachments: attachments,
             userInfo: userInfo
         )
@@ -149,6 +152,7 @@ extension NotificationManager {
     ///   - hour: Hour component for the trigger (24-hour format).
     ///   - minute: Minute component for the trigger.
     ///   - days: The weekdays on which notifications repeat.
+    ///   - sound: The notification sound to play when delivered.
     ///   - attachments: Optional attachment items.
     ///   - userInfo: Metadata added to each corresponding request.
     public func scheduleRepeatingWeekdays(
@@ -159,6 +163,7 @@ extension NotificationManager {
         hour: Int,
         minute: Int,
         days: [NotificationWeekday],
+        sound: NotificationSound = .default,
         attachments: [NotificationAttachmentProviding] = [],
         userInfo: [AnyHashable : Any] = [:]
     ) async {
@@ -173,6 +178,7 @@ extension NotificationManager {
                 category: category,
                 type: .calendar(weekday: nil, hour: hour, minute: minute, repeats: true),
                 weekday: day.value,
+                sound: sound,
                 attachments: attachments,
                 userInfo: userInfo.merging(["weekday": day.value]) { $1 }
             )
@@ -193,6 +199,7 @@ extension NotificationManager {
     ///   - category: Optional category identifier.
     ///   - type: Determines the trigger style.
     ///   - weekday: Optional weekday number for calendar triggers.
+    ///   - sound: The notification sound to play when delivered.
     ///   - attachments: Providers for attachment generation.
     ///   - userInfo: Arbitrary metadata.
     private func scheduleInternal(
@@ -202,6 +209,7 @@ extension NotificationManager {
         category: NotificationCategoryDefinition?,
         type: LocalNotificationType,
         weekday: Int? = nil,
+        sound: NotificationSound,
         attachments: [NotificationAttachmentProviding],
         userInfo: [AnyHashable : Any]
     ) async {
@@ -211,7 +219,11 @@ extension NotificationManager {
         content.body = body
         content.sound = .default
         content.userInfo = userInfo
-        if let category { content.categoryIdentifier = category.id }
+        content.sound = sound.value
+
+        if let category {
+            content.categoryIdentifier = category.id
+        }
 
         let built: [UNNotificationAttachment] = await {
             var result: [UNNotificationAttachment] = []
