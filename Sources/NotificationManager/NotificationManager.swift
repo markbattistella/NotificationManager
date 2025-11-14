@@ -8,33 +8,48 @@ import Foundation
 import SimpleLogger
 @_exported import UserNotifications
 
-/// Manages all local notification behaviour.
+#if canImport(UIKit)
+import UIKit
+#endif
+
+/// Manages local notification permissions, categories, and scheduling.
 ///
-/// This manager provides a unified interface for requesting permissions, registering categories,
-/// scheduling one-off or repeating notifications, creating attachments, and inspecting or removing
-/// pending requests.
+/// This class provides a unified interface for interacting with ``UNUserNotificationCenter``. It
+/// handles permission requests, category registration, scheduling one-off or repeating
+/// notifications, and querying or removing pending requests.
 ///
-/// Use this class as the single point of interaction with `UNUserNotificationCenter`.
+/// Instances of this manager are observable and update the UI automatically when permission-related
+/// values change.
 @MainActor
 @Observable
 public final class NotificationManager {
 
-    /// Indicates whether the user has granted notification permissions.
-    ///
-    /// This value is updated after calling ``requestPermission()`` or ``refreshPermissionStatus()``.
-    public var permissionGranted: Bool = false
-
+    /// The underlying system notification centre used to register categories, request permissions,
+    /// schedule notifications, and inspect pending requests.
     @ObservationIgnored
     private let center = UNUserNotificationCenter.current()
 
+    /// A logging helper used to record notification-related events such as permission requests,
+    /// scheduling operations, and errors.
     @ObservationIgnored
     private let logger = SimpleLogger(category: .pushNotifications)
 
-    /// Creates a notification manager instance.
+    /// The system’s current authorization state for local notifications.
     ///
-    /// The manager is responsible for coordinating permission access, category registration,
-    /// scheduling operations, and interacting with pending notifications.
-    public init() { }
+    /// This value reflects the user’s most recently retrieved settings and is updated when permissions
+    /// are requested or refreshed.
+    public var authorizationStatus: UNAuthorizationStatus = .notDetermined
+
+    /// A Boolean value indicating whether the app has permission to deliver notifications.
+    ///
+    /// Returns `true` when the authorization state is `.authorized` or `.provisional`, and
+    /// `false` in all other cases.
+    public var permissionGranted: Bool {
+        authorizationStatus == .authorized || authorizationStatus == .provisional
+    }
+
+    /// Creates a notification manager instance.
+    public init() {}
 }
 
 // MARK: - Category Registration
@@ -72,27 +87,72 @@ extension NotificationManager {
 
 extension NotificationManager {
 
-    /// Requests authorisation for alert, sound, and badge notifications.
+    /// Requests permission to deliver local notifications and reports the outcome.
     ///
-    /// On completion, updates ``permissionGranted`` with the result.
+    /// This method evaluates the current authorization state and performs the appropriate action:
+    ///
+    /// - If the user has previously denied notifications, no permission prompt is shown and the
+    /// result indicates that the app must redirect the user to Settings.
+    /// - If permission has already been granted, the method returns immediately without
+    /// displaying a prompt.
+    /// - If the authorization status is undetermined, the system permission dialog is presented
+    /// and the result reflects the user’s choice.
+    ///
+    /// The returned value describes the action taken and the resulting authorization state,
+    /// allowing the caller to update the UI or navigate to system settings as needed.
+    ///
+    /// - Returns: A ``PermissionRequestResult`` value describing the outcome of the permission
+    /// request flow.
     @MainActor
-    public func requestPermission() async {
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            permissionGranted = granted
-        } catch {
-            permissionGranted = false
+    @discardableResult
+    public func requestPermission() async -> PermissionRequestResult {
+        switch authorizationStatus {
+
+            case .denied:
+                await refreshPermissionStatus()
+                #if canImport(UIKit) && !os(macOS)
+
+                let url = URL(string: UIApplication.openNotificationSettingsURLString)!
+                return .needsSettings(url)
+
+                #else
+
+                let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications")!
+                return .needsSettings(url)
+
+                #endif
+
+            case .authorized, .provisional:
+                await refreshPermissionStatus()
+                return .alreadyAuthorized
+
+            case .notDetermined, .ephemeral:
+                do {
+                    let granted = try await center
+                        .requestAuthorization(options: [.alert, .sound, .badge])
+                    await refreshPermissionStatus()
+                    return granted ? .granted : .denied
+                } catch {
+                    self.authorizationStatus = .denied
+                    return .error(error)
+                }
+
+            @unknown default:
+                return .error(nil)
         }
     }
 
-    /// Updates ``permissionGranted`` using the system’s current authorisation state.
+    /// Reloads the system’s current notification authorization status.
     ///
-    /// Permissions are considered granted if the user’s status is `.authorized` or `.provisional`.
+    /// This method queries ``UNUserNotificationCenter`` for the latest permission state and
+    /// updates ``authorizationStatus`` accordingly.
+    ///
+    /// Use this method when the app becomes active or after returning from Settings to ensure the
+    /// UI reflects any changes made by the user.
     @MainActor
     public func refreshPermissionStatus() async {
         let settings = await center.notificationSettings()
-        permissionGranted = settings.authorizationStatus == .authorized ||
-        settings.authorizationStatus == .provisional
+        self.authorizationStatus = settings.authorizationStatus
     }
 }
 
@@ -298,7 +358,6 @@ extension NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
         content.userInfo = userInfo
         content.sound = sound.value
 

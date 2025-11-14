@@ -28,6 +28,8 @@ struct ContentView: View {
     /// The set of weekdays chosen for repeating reminders.
     @State private var selectedDays: Set<NotificationWeekday> = [.monday, .wednesday, .friday]
 
+    @State private var settingsURL: URL?
+
     var body: some View {
         NavigationStack(
             path: Binding(
@@ -38,10 +40,29 @@ struct ContentView: View {
             List {
                 Section("Permissions") {
                     Button("Request Permission") {
-                        Task { await notifications.requestPermission() }
+                        Task {
+                            let result = await notifications.requestPermission()
+                            switch result {
+                                case .needsSettings(let url):
+                                    settingsURL = url
+                                default:
+                                    settingsURL = nil
+                            }
+                        }
                     }
+
                     Text("Granted: \(notifications.permissionGranted.description)")
+
+                    if let settingsURL {
+                        Button("Open Settings") {
+                            Task { await UIApplication.shared.open(settingsURL) }
+                        }
+                    }
                 }
+                .task {
+                    await notifications.refreshPermissionStatus()
+                }
+
 
                 Section("Repeating Weekday Reminder") {
                     DatePicker(
