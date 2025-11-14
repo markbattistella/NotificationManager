@@ -17,7 +17,7 @@ public protocol NotificationActionDefinition {
     var id: String { get }
 
     /// The user-visible title displayed for the action.
-    var title: String { get }
+    var title: LocalizedStringResource { get }
 
     /// The behavioural options that configure how the action operates.
     var options: UNNotificationActionOptions { get }

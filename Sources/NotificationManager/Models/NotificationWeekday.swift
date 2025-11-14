@@ -19,8 +19,8 @@ import Foundation
 /// calendars may begin their week on different days, Apple guarantees that weekday indices always
 /// map to the fixed `weekdaySymbols` order.
 ///
-/// `NotificationWeekday` provides convenience constants such as ``sunday`` and ``monday`` for ease of use,
-/// along with support for iteration via ``CaseIterable``.
+/// `NotificationWeekday` provides convenience constants such as ``sunday`` and ``monday`` for
+/// ease of use, along with support for iteration via ``CaseIterable``.
 ///
 /// Example:
 /// ```swift
@@ -59,43 +59,65 @@ public struct NotificationWeekday: Hashable, CaseIterable {
     public static var allCases: [NotificationWeekday] {
         (1...7).map { NotificationWeekday($0) }
     }
+}
 
-    /// The localized full name of the weekday.
+// MARK: - Localized Names & Symbols
+
+extension NotificationWeekday {
+
+    /// The localized full weekday name.
     ///
-    /// This value is derived from ``Calendar/weekdaySymbols`` using the current system calendar
-    /// and locale.
-    ///
-    /// Example outputs:
+    /// Examples:
     /// - `"Sunday"`
-    /// - `"Montag"` (German locale)
-    /// - `"יום ראשון"` (Hebrew locale)
-    public var name: String {
-        Calendar.current.weekdaySymbols[value - 1]
+    /// - `"Montag"`
+    /// - `"יום ראשון"`
+    public var localizedName: String {
+        Calendar.autoupdatingCurrent.weekdaySymbols[value - 1]
+    }
+
+    /// The localized abbreviated symbol (3–letter, locale-specific).
+    ///
+    /// Examples:
+    /// - `"Sun"`
+    /// - `"Mon"`
+    /// - `"So"`
+    public var localizedShortSymbol: String {
+        Calendar.autoupdatingCurrent.shortWeekdaySymbols[value - 1]
+    }
+
+    /// The localized minimal symbol (often 1–2 letters).
+    ///
+    /// Examples:
+    /// - `"S"`
+    /// - `"M"`
+    /// - `"Su"`
+    public var localizedVeryShortSymbol: String {
+        Calendar.autoupdatingCurrent.veryShortWeekdaySymbols[value - 1]
     }
 }
 
 // MARK: - Convenience static constants
 
-public extension NotificationWeekday {
+extension NotificationWeekday {
 
     /// The weekday representing Sunday (`1` in the system calendar).
-    static var sunday: NotificationWeekday { NotificationWeekday(1) }
+    public static var sunday: NotificationWeekday { NotificationWeekday(1) }
 
     /// The weekday representing Monday (`2` in the system calendar).
-    static var monday: NotificationWeekday { NotificationWeekday(2) }
+    public static var monday: NotificationWeekday { NotificationWeekday(2) }
 
     /// The weekday representing Tuesday (`3` in the system calendar).
-    static var tuesday: NotificationWeekday { NotificationWeekday(3) }
+    public static var tuesday: NotificationWeekday { NotificationWeekday(3) }
 
     /// The weekday representing Wednesday (`4` in the system calendar).
-    static var wednesday: NotificationWeekday { NotificationWeekday(4) }
+    public static var wednesday: NotificationWeekday { NotificationWeekday(4) }
 
     /// The weekday representing Thursday (`5` in the system calendar).
-    static var thursday: NotificationWeekday { NotificationWeekday(5) }
+    public static var thursday: NotificationWeekday { NotificationWeekday(5) }
 
     /// The weekday representing Friday (`6` in the system calendar).
-    static var friday: NotificationWeekday { NotificationWeekday(6) }
+    public static var friday: NotificationWeekday { NotificationWeekday(6) }
 
     /// The weekday representing Saturday (`7` in the system calendar).
-    static var saturday: NotificationWeekday { NotificationWeekday(7) }
+    public static var saturday: NotificationWeekday { NotificationWeekday(7) }
 }

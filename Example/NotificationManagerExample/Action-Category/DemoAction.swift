@@ -30,7 +30,7 @@ enum DemoAction: NotificationActionDefinition, Sendable {
     }
     
     /// The user-visible title for the action.
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
             case .open: return "Open"
             case .snooze: return "Snooze"

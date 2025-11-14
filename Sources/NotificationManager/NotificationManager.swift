@@ -55,7 +55,7 @@ extension NotificationManager {
                 actions: category.actions.map {
                     UNNotificationAction(
                         identifier: $0.id,
-                        title: $0.title,
+                        title: String(localized: $0.title),
                         options: $0.options
                     )
                 },
@@ -139,6 +139,44 @@ extension NotificationManager {
         )
     }
 
+    /// Convenience overload that accepts `LocalizedStringResource` and converts them to localized
+    /// `String` before scheduling.
+    ///
+    /// - Parameters:
+    ///   - id: The unique identifier for the request.
+    ///   - title: The notification’s title.
+    ///   - body: The main notification text.
+    ///   - category: The category definition used for custom actions.
+    ///   - type: Defines whether the notification is time-interval, calendar-based, or
+    ///   location-triggered.
+    ///   - sound: The notification sound to play when delivered.
+    ///   - attachments: Optional attachment providers that generate `UNNotificationAttachment`
+    ///   objects.
+    ///   - userInfo: Arbitrary metadata attached to the request.
+    ///
+    /// Use this method for all single-notification scheduling needs.
+    public func schedule(
+        id: String,
+        title: LocalizedStringResource,
+        body: LocalizedStringResource,
+        category: NotificationCategoryDefinition? = nil,
+        type: LocalNotificationType,
+        sound: NotificationSound = .default,
+        attachments: [NotificationAttachmentProviding] = [],
+        userInfo: [AnyHashable : Any] = [:]
+    ) async {
+        await schedule(
+            id: id,
+            title: String(localized: title),
+            body: String(localized: body),
+            category: category,
+            type: type,
+            sound: sound,
+            attachments: attachments,
+            userInfo: userInfo
+        )
+    }
+
     /// Schedules repeating weekday-based notifications.
     ///
     /// Creates one request per supplied weekday by combining the `baseId` with the numeric
@@ -183,6 +221,49 @@ extension NotificationManager {
                 userInfo: userInfo.merging(["weekday": day.value]) { $1 }
             )
         }
+    }
+
+    /// Convenience overload for repeating weekday notifications accepting `LocalizedStringResource`
+    /// titles and bodies.
+    ///
+    /// Creates one request per supplied weekday by combining the `baseId` with the numeric
+    /// weekday value.
+    ///
+    /// - Parameters:
+    ///   - baseId: The root identifier for all weekday instances.
+    ///   - title: Notification title text.
+    ///   - body: Notification body text.
+    ///   - category: Optional category association.
+    ///   - hour: Hour component for the trigger (24-hour format).
+    ///   - minute: Minute component for the trigger.
+    ///   - days: The weekdays on which notifications repeat.
+    ///   - sound: The notification sound to play when delivered.
+    ///   - attachments: Optional attachment items.
+    ///   - userInfo: Metadata added to each corresponding request.
+    public func scheduleRepeatingWeekdays(
+        id baseId: String,
+        title: LocalizedStringResource,
+        body: LocalizedStringResource,
+        category: NotificationCategoryDefinition? = nil,
+        hour: Int,
+        minute: Int,
+        days: [NotificationWeekday],
+        sound: NotificationSound = .default,
+        attachments: [NotificationAttachmentProviding] = [],
+        userInfo: [AnyHashable : Any] = [:]
+    ) async {
+        await scheduleRepeatingWeekdays(
+            id: baseId,
+            title: String(localized: title),
+            body: String(localized: body),
+            category: category,
+            hour: hour,
+            minute: minute,
+            days: days,
+            sound: sound,
+            attachments: attachments,
+            userInfo: userInfo
+        )
     }
 
     // MARK: - Private Scheduling
