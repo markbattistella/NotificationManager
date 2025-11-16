@@ -51,7 +51,8 @@ struct ContentView: View {
                         }
                     }
 
-                    Text("Granted: \(notifications.permissionGranted.description)")
+                    Text("Cached Status: \(String(describing: notifications.authorizationStatus))")
+                    Text("Cached Granted: \(notifications.permissionGranted.description)")
 
                     if let settingsURL {
                         Button("Open Settings") {

@@ -81,7 +81,7 @@ public final class NotificationManager {
             await self?.refreshPermissionStatus()
         }
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }

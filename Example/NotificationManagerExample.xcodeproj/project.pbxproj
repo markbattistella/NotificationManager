@@ -38,7 +38,6 @@
 			isa = PBXGroup;
 			children = (
 				A33761672EC59A8B00FDCE11 /* NotificationManagerExample */,
-				A33761732EC59AB900FDCE11 /* Frameworks */,
 				A33761662EC59A8B00FDCE11 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -49,13 +48,6 @@
 				A33761652EC59A8B00FDCE11 /* NotificationManagerExample.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		A33761732EC59AB900FDCE11 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
