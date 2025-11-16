@@ -35,6 +35,9 @@ public final class NotificationManager {
     @ObservationIgnored
     private let logger = SimpleLogger(category: .pushNotifications)
 
+    /// The identifier used for the inactivity reminder notification.
+    private static let inactivityReminderId = "com.markbattistella.package.notificationManager.inactivityReminder"
+
     /// The system’s current authorization state for local notifications.
     ///
     /// This value reflects the user’s most recently retrieved settings and is updated when permissions
@@ -50,7 +53,38 @@ public final class NotificationManager {
     }
 
     /// Creates a notification manager instance.
-    public init() {}
+    public init() {
+        #if canImport(UIKit)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        #else
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppDidBecomeActive),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        #endif
+
+        Task {
+            await refreshPermissionStatus()
+        }
+    }
+
+    @objc
+    private func handleAppDidBecomeActive() {
+        Task { @MainActor [weak self] in
+            await self?.refreshPermissionStatus()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
 }
 
 // MARK: - Category Registration
@@ -107,24 +141,19 @@ extension NotificationManager {
     @MainActor
     @discardableResult
     public func requestPermission() async -> PermissionRequestResult {
+        await refreshPermissionStatus()
+
         switch authorizationStatus {
-
             case .denied:
-                await refreshPermissionStatus()
                 #if canImport(UIKit) && !os(macOS)
-
                 let url = URL(string: UIApplication.openNotificationSettingsURLString)!
                 return .needsSettings(url)
-
                 #else
-
                 let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications")!
                 return .needsSettings(url)
-
                 #endif
 
             case .authorized, .provisional:
-                await refreshPermissionStatus()
                 return .alreadyAuthorized
 
             case .notDetermined, .ephemeral:
@@ -154,6 +183,26 @@ extension NotificationManager {
     public func refreshPermissionStatus() async {
         let settings = await center.notificationSettings()
         self.authorizationStatus = settings.authorizationStatus
+    }
+}
+
+// MARK: - Badge setting
+
+extension NotificationManager {
+
+    /// Sets the app's badge count to the specified number.
+    ///
+    /// - Parameter count: The badge number to display. Pass 0 to hide the badge.
+    /// - Throws: An error if the badge count cannot be set.
+    public func setBadgeCount(_ count: Int) async throws {
+        try await center.setBadgeCount(count)
+    }
+
+    /// Clears the app's badge by setting it to zero.
+    ///
+    /// - Throws: An error if the badge count cannot be cleared.
+    public func clearBadge() async throws {
+        try await center.setBadgeCount(0)
     }
 }
 
@@ -366,15 +415,21 @@ extension NotificationManager {
             content.categoryIdentifier = category.id
         }
 
-        let built: [UNNotificationAttachment] = await {
-            var result: [UNNotificationAttachment] = []
+        let built: [UNNotificationAttachment] = await withTaskGroup(
+            of: UNNotificationAttachment?.self
+        ) { group in
             for item in attachments {
-                if let attachment = await item.makeAttachment() {
-                    result.append(attachment)
+                group.addTask { await item.makeAttachment() }
+            }
+
+            var results: [UNNotificationAttachment] = []
+            for await attachment in group {
+                if let attachment {
+                    results.append(attachment)
                 }
             }
-            return result
-        }()
+            return results
+        }
         if !built.isEmpty { content.attachments = built }
 
         let trigger: UNNotificationTrigger
@@ -383,6 +438,9 @@ extension NotificationManager {
             case let .timeInterval(duration, repeats):
                 let rawSeconds = duration.timeInterval
                 let seconds = max(rawSeconds, repeats ? 60 : 0.1)
+                if repeats && rawSeconds < 60 {
+                    logger.warning("Repeating notification duration adjusted from \(rawSeconds)s to 60s (minimum)")
+                }
 
                 trigger = UNTimeIntervalNotificationTrigger(
                     timeInterval: seconds,
@@ -446,7 +504,7 @@ extension NotificationManager {
         title: String,
         body: String
     ) async {
-        let id = "com.markbattistella.package.notificationManager.inactivityReminder"
+        let id = Self.inactivityReminderId
         let defaults = UserDefaults.notification
 
         defaults.set(
@@ -535,5 +593,40 @@ extension NotificationManager {
     public func pendingNotifications(matchingPrefix prefix: String) async -> [UNNotificationRequest] {
         let all = await center.pendingNotificationRequests()
         return all.filter { $0.identifier.hasPrefix(prefix) }
+    }
+
+    /// Removes a single delivered notification from Notification Center.
+    ///
+    /// Use this method to remove a notification that has already been delivered and is visible in
+    /// the notification center. This does not affect pending notifications.
+    ///
+    /// - Parameter id: The identifier of the delivered notification to remove.
+    public func removeDeliveredNotification(id: String) {
+        center.removeDeliveredNotifications(withIdentifiers: [id])
+    }
+
+    /// Removes all delivered notifications from Notification Center.
+    ///
+    /// Use this method to clear all notifications that have been delivered to the user. This does
+    /// not affect pending notifications that have not yet been delivered.
+    public func removeAllDeliveredNotifications() {
+        center.removeAllDeliveredNotifications()
+    }
+
+    /// Fetches all delivered notifications currently visible in Notification Center.
+    ///
+    /// - Returns: An array of all `UNNotification` objects that have been delivered and are still
+    /// visible to the user.
+    public func deliveredNotifications() async -> [UNNotification] {
+        await center.deliveredNotifications()
+    }
+
+    /// Checks whether a notification with the given identifier is currently scheduled.
+    ///
+    /// - Parameter id: The notification identifier to check.
+    /// - Returns: `true` if a pending notification with this ID exists, `false` otherwise.
+    public func isNotificationScheduled(id: String) async -> Bool {
+        let pending = await center.pendingNotificationRequests()
+        return pending.contains { $0.identifier == id }
     }
 }
