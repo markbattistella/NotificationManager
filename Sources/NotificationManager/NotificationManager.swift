@@ -6,6 +6,7 @@
 
 import Foundation
 import SimpleLogger
+import DefaultsKit
 @_exported import UserNotifications
 
 #if canImport(UIKit)
@@ -379,7 +380,10 @@ extension NotificationManager {
         let trigger: UNNotificationTrigger
 
         switch type {
-            case let .timeInterval(seconds, repeats):
+            case let .timeInterval(duration, repeats):
+                let rawSeconds = duration.timeInterval
+                let seconds = max(rawSeconds, repeats ? 60 : 0.1)
+
                 trigger = UNTimeIntervalNotificationTrigger(
                     timeInterval: seconds,
                     repeats: repeats
@@ -416,6 +420,65 @@ extension NotificationManager {
         } catch {
             logger.error("Failed to schedule notification \(id): \(error.localizedDescription)")
         }
+    }
+}
+
+// MARK: - Inactivity Scheduler
+
+extension NotificationManager {
+
+    /// Schedules a repeating inactivity reminder notification.
+    ///
+    /// This method stores the provided `duration` and the current timestamp in the
+    /// notification-specific defaults container, removes any previously scheduled inactivity reminder,
+    /// and registers a new repeating time-interval notification.
+    ///
+    /// Use this when your app wants to notify the user after a period of inactivity.
+    ///
+    /// - Parameters:
+    ///   - duration: The interval before the reminder is delivered. Defaults to one week.
+    ///   - title: The notification’s title text.
+    ///   - body: The main message displayed in the notification.
+    ///
+    /// The reminder repeats automatically at the specified interval.
+    public func scheduleInactivityReminder(
+        duration: Duration = .seconds(7 * 24 * 60 * 60),
+        title: String,
+        body: String
+    ) async {
+        let id = "com.markbattistella.package.notificationManager.inactivityReminder"
+        let defaults = UserDefaults.notification
+
+        defaults.set(
+            duration.timeInterval,
+            for: NotificationsUserDefaultsKey.inactivityIntervalSeconds
+        )
+        defaults.set(
+            Date.now,
+            for: NotificationsUserDefaultsKey.appLastOpened
+        )
+
+        removePendingNotification(id: id)
+
+        await schedule(
+            id: id,
+            title: title,
+            body: body,
+            type: .timeInterval(duration: duration, repeats: true),
+            sound: .default
+        )
+    }
+
+    /// Records the current time as the app’s last-open timestamp.
+    ///
+    /// This value is used by the inactivity reminder system to track user activity. Host
+    /// applications should call this when the app becomes active or when the relevant feature is
+    /// used.
+    public func markAppOpened() {
+        UserDefaults.notification.set(
+            Date.now,
+            for: NotificationsUserDefaultsKey.appLastOpened
+        )
     }
 }
 

@@ -110,7 +110,7 @@ struct ContentView: View {
                                 title: "10 second alert",
                                 body: "This fired after 10 seconds",
                                 category: DemoCategory.reminder,
-                                type: .timeInterval(seconds: 10, repeats: false),
+                                type: .timeInterval(duration: .seconds(10), repeats: false),
                                 sound: .default,
                                 attachments: [attachment],
                                 userInfo: ["noteID": "123"]
@@ -131,7 +131,7 @@ struct ContentView: View {
                                 title: "10 second alert",
                                 body: "This fired after 10 seconds",
                                 category: DemoCategory.reminder,
-                                type: .timeInterval(seconds: 10, repeats: false),
+                                type: .timeInterval(duration: .seconds(10), repeats: false),
                                 sound: .named("water-drop.caf"),
                                 attachments: [attachment],
                                 userInfo: ["noteID": "123"]

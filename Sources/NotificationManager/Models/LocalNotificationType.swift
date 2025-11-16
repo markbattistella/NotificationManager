@@ -16,9 +16,9 @@ public enum LocalNotificationType {
     /// A trigger that fires after a specified time interval.
     ///
     /// - Parameters:
-    ///   - seconds: The delay before the notification is delivered.
+    ///   - duration: The delay before the notification is delivered.
     ///   - repeats: Indicates whether the trigger repeats at the given interval.
-    case timeInterval(seconds: TimeInterval, repeats: Bool)
+    case timeInterval(duration: Duration, repeats: Bool)
 
     /// A calendar-based trigger for scheduled delivery.
     ///

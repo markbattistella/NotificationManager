@@ -78,7 +78,7 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
                         title: "Snoozed Notification",
                         body: "This is a snoozed alert.",
                         category: SnoozeCategory.oneOff,
-                        type: .timeInterval(seconds: 10, repeats: false),
+                        type: .timeInterval(duration: .seconds(10), repeats: false),
                         attachments: [attachment],
                         userInfo: info
                     )
