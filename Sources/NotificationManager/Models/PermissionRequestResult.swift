@@ -6,29 +6,23 @@
 
 import Foundation
 
-/// Represents the outcome of a notification permission request.
+/// Represents the outcome of a request for notification authorisation.
 ///
-/// Values of this type indicate whether permission was granted, denied, already available, or
-/// requires a redirect to the system Settings app. It also includes an error case for unexpected
-/// failures during the permission request process.
-public enum PermissionRequestResult: Sendable {
+/// This type indicates whether permission was granted, explicitly denied, or whether an error
+/// occurred during the authorisation attempt.
+public enum PermissionRequestResult {
 
-    /// The user granted notification permission during this request.
-    case granted
+    /// The user granted notification permission, either fully or provisionally.
+    case authorized
 
-    /// The user explicitly denied permission during this request.
-    case denied
-
-    /// Notification permission had already been granted before the request was made.
-    case alreadyAuthorized
-
-    /// Permission had been denied previously and cannot be requested again.
+    /// The user denied notification permission.
     ///
-    /// Includes a URL directing the user to the system Settings page for the app.
-    case needsSettings(URL)
+    /// - Parameter url: An optional URL to the system notification settings page, allowing the
+    /// user to manually update permissions if desired.
+    case denied(URL?)
 
-    /// An error occurred while attempting to request permission.
+    /// An error occurred while requesting notification permission.
     ///
-    /// Includes the underlying error when available.
+    /// - Parameter error: The underlying error, if available.
     case error(Error?)
 }

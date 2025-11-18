@@ -42,7 +42,6 @@ struct NotificationManagerExampleApp: App {
                         DemoCategory.reminder,
                         SnoozeCategory.oneOff
                     ])
-                    await notifications.refreshPermissionStatus()
                 }
         }
     }

@@ -6,11 +6,11 @@
 
 import NotificationManager
 
-/// Demo category demonstrating conformance to ``NotificationCategoryDefinition``.
+/// Demo category demonstrating conformance to ``NotificationCategoryDescriptor``.
 ///
 /// A category groups related notification actions and is referenced by scheduled notifications
 /// that support user interaction.
-enum DemoCategory: NotificationCategoryDefinition, Sendable {
+enum DemoCategory: NotificationCategoryDescriptor, Sendable {
 
     /// A reminder-style notification category.
     case reminder
@@ -24,7 +24,7 @@ enum DemoCategory: NotificationCategoryDefinition, Sendable {
     /// - ``DemoAction/open``
     /// - ``DemoAction/snooze``
     /// - ``DemoAction/cancel``
-    var actions: [NotificationActionDefinition] {
+    var actions: [NotificationActionDescriptor] {
         [
             DemoAction.open,
             DemoAction.snooze,

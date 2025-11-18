@@ -7,27 +7,29 @@
 import SwiftUI
 import NotificationManager
 
-/// The main interface for managing and scheduling demo notifications.
-///
-/// Displays pending requests, allows users to schedule repeating weekday reminders, and responds
-/// to navigation driven by the notification router.
+/// A view demonstrating notification permissions, scheduling, repeating reminders, pending
+/// notifications, and navigation to detail screens.
 struct ContentView: View {
 
-    /// The shared notification manager from the environment.
+    /// Manages notification authorisation, scheduling, and retrieval.
     @Environment(NotificationManager.self) private var notifications
 
-    /// The router used to handle navigation triggered by notifications.
+    /// Handles routing based on notification-triggered navigation.
     @Environment(NotificationRouter.self) private var router
 
-    /// The list of pending notification requests currently scheduled.
+    /// The list of currently pending notification requests.
     @State private var pending: [UNNotificationRequest] = []
 
-    /// The selected time used when scheduling new reminders.
+    /// The selected time for repeating weekday reminders.
     @State private var reminderTime = Date()
 
-    /// The set of weekdays chosen for repeating reminders.
+    /// The selected weekdays for repeating reminders.
     @State private var selectedDays: Set<NotificationWeekday> = [.monday, .wednesday, .friday]
 
+    /// A URL to open system settings when permission is denied.
+    ///
+    /// - Important: This will not work on simulator. Only physical devices open to the
+    /// notification url.
     @State private var settingsURL: URL?
 
     var body: some View {
@@ -38,123 +40,141 @@ struct ContentView: View {
             )
         ) {
             List {
+
+                // MARK: Permissions Section
+
                 Section("Permissions") {
-                    Button("Request Permission") {
+                    Button("Request Permission - Badges only") {
                         Task {
-                            let result = await notifications.requestPermission()
+                            let result = await notifications.requestAuthorization()
                             switch result {
-                                case .needsSettings(let url):
-                                    settingsURL = url
-                                default:
-                                    settingsURL = nil
+                                case .denied(let url): settingsURL = url
+                                default: settingsURL = nil
                             }
                         }
                     }
 
-                    Text("Cached Status: \(String(describing: notifications.authorizationStatus))")
-                    Text("Cached Granted: \(notifications.permissionGranted.description)")
+                    Button("Update Permission - Alert, Badge, and Sound") {
+                        Task { await notifications.updateOptions(to: [.alert, .badge, .sound]) }
+                    }
+
+                    LabeledContent(
+                        "authorizationStatus",
+                        value: String(describing: notifications.authorizationStatus)
+                    )
+
+                    LabeledContent(
+                        "permissionGranted",
+                        value: notifications.permissionGranted.description
+                    )
 
                     if let settingsURL {
-                        Button("Open Settings") {
-                            Task { await UIApplication.shared.open(settingsURL) }
+                        Button("Open Settings") { UIApplication.shared.open(settingsURL) }
+                    }
+                }
+
+                // MARK: Quick Notifications
+
+                Section("Quick notifications") {
+                    Button("In 10 seconds - Default Sound") {
+                        Task {
+                            let attachment = NotificationAttachmentBuilder
+                                .AttachmentSymbol("bell.fill", foreground: .white, background: .blue)
+
+                            await notifications.schedule(
+                                id: "quick-notification",
+                                title: "10 second alert",
+                                subtitle: "This is the subtitle line",
+                                body: "This is the main body. The notification fired after 10 seconds!",
+                                category: DemoCategory.reminder,
+                                type: .timeInterval(duration: .seconds(10), repeats: false),
+                                sound: .default,
+                                badge: 1,
+                                attachments: [attachment],
+                                userInfo: ["noteID" : "123"]
+                            )
+                        }
+                    }
+
+                    Button("In 10 seconds - Custom Sound") {
+                        Task {
+                            let view = VStack {
+                                Text("Hello World!")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                Text("This is a SwiftUI view as a notification image.")
+                            }
+
+                            let attachment = NotificationAttachmentBuilder
+                                .AttachmentView(view, size: .init(width: 300, height: 300))
+
+                            await notifications.schedule(
+                                id: "quick-notification",
+                                title: "10 second alert",
+                                body: "This is the main body. The notification fired after 10 seconds! It has a custom sound.",
+                                category: DemoCategory.reminder,
+                                type: .timeInterval(duration: .seconds(10), repeats: false),
+                                sound: .named("water-drop.caf"),
+                                badge: 2,
+                                attachments: [attachment],
+                                userInfo: ["noteID" : "123"]
+                            )
                         }
                     }
                 }
-                .task {
-                    await notifications.refreshPermissionStatus()
-                }
 
+                // MARK: Repeating Reminders
 
-                Section("Repeating Weekday Reminder") {
+                Section("Repeating weekday notifications") {
                     DatePicker(
-                        "Time",
+                        "Alert time",
                         selection: $reminderTime,
                         displayedComponents: .hourAndMinute
                     )
+                    .labeledContentStyle(.automatic)
 
                     WeekdayPicker(selectedDays: $selectedDays)
 
                     Button("Schedule Repeating Reminder") {
                         Task {
-                            let attachment = NotificationAttachmentBuilder.Symbol("calendar")
+                            let attachment = NotificationAttachmentBuilder.AttachmentSymbol("calendar")
+                            let comps = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
 
-                            let comps = Calendar.current
-                                .dateComponents([.hour, .minute], from: reminderTime)
-
-                            await notifications
-                                .scheduleRepeatingWeekdays(
-                                    id: "weekday-reminder",
-                                    title: "Weekly Reminder",
-                                    body: "This is your repeating reminder!",
-                                    category: DemoCategory.reminder,
-                                    hour: comps.hour!,
-                                    minute: comps.minute!,
-                                    days: Array(selectedDays),
-                                    attachments: [attachment],
-                                    userInfo: ["noteID": "789"]
-                                )
-                        }
-                    }
-                }
-
-                Section("Quick Tests") {
-                    Button("Fire in 10 seconds - Default Sound") {
-                        Task {
-                            let attachment = NotificationAttachmentBuilder.Symbol(
-                                "bell.fill",
-                                foreground: .white,
-                                background: .blue
-                            )
-
-                            await notifications.schedule(
-                                id: "test-timeinterval",
-                                title: "10 second alert",
-                                body: "This fired after 10 seconds",
-                                category: DemoCategory.reminder,
-                                type: .timeInterval(duration: .seconds(10), repeats: false),
-                                sound: .default,
+                            await notifications.scheduleRepeatingNotification(
+                                id: "weekday-reminder",
+                                title: "Weekly Reminder",
+                                body: "This is your repeating reminder!",
+                                hour: comps.hour!,
+                                minute: comps.minute!,
+                                days: Array(selectedDays),
                                 attachments: [attachment],
-                                userInfo: ["noteID": "123"]
+                                userInfo: ["noteID": "789"]
                             )
                         }
                     }
+                }
 
-                    Button("Fire in 10 seconds - Custom Sound") {
+                // MARK: Pending Notifications
+
+                Section("Pending notifications") {
+                    Button("Refresh pending") {
                         Task {
-                            let attachment = NotificationAttachmentBuilder.Symbol(
-                                "bell.fill",
-                                foreground: .white,
-                                background: .blue
-                            )
-
-                            await notifications.schedule(
-                                id: "test-timeinterval",
-                                title: "10 second alert",
-                                body: "This fired after 10 seconds",
-                                category: DemoCategory.reminder,
-                                type: .timeInterval(duration: .seconds(10), repeats: false),
-                                sound: .named("water-drop.caf"),
-                                attachments: [attachment],
-                                userInfo: ["noteID": "123"]
-                            )
+                            pending = await notifications.pendingNotifications()
                         }
+                    }
+
+                    ForEach(pending, id: \.identifier) { notification in
+                        LabeledContent(
+                            notification.identifier,
+                            value: notification.content.body
+                        )
                     }
                 }
 
-                Section("Pending") {
-                    Button("Refresh Pending") {
-                        Task { await refreshPending() }
-                    }
-                    ForEach(pending, id: \.identifier) { req in
-                        VStack(alignment: .leading) {
-                            Text(req.identifier).font(.headline)
-                            Text(req.content.body)
-                        }
-                    }
-                }
+                // MARK: Remove Notifications
 
                 Section("Remove") {
-                    Button("Remove All Pending") {
+                    Button("Remove All Pending Notifications", role: .destructive) {
                         notifications.removeAllPendingNotifications()
                         pending = []
                     }
@@ -167,88 +187,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Notification Demo")
-        }
-    }
-
-    /// Refreshes the list of pending notifications and updates the UI.
-    ///
-    /// Called when the user taps **Refresh Pending**.
-    func refreshPending() async {
-        pending = await notifications.pendingNotifications()
-    }
-}
-
-// MARK: - Detail Sub-View
-
-/// A simple detail screen showing the identifier passed from a notification.
-///
-/// Used when navigating from a delivered notification’s action.
-struct DetailView: View {
-
-    /// The identifier associated with the item to display.
-    let id: String
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Detail Screen")
-                .font(.largeTitle)
-            Text("Opened from notification id: \(id)")
-        }
-        .padding()
-    }
-}
-
-// MARK: - Sub-View Component
-
-/// A horizontal picker allowing users to select multiple weekdays.
-///
-/// Displays days in fixed Sunday–Saturday order and toggles selection states
-/// by updating the bound ``selectedDays`` set.
-struct WeekdayPicker: View {
-
-    /// The set of weekdays currently selected.
-    @Binding var selectedDays: Set<NotificationWeekday>
-
-    /// Days presented in a fixed Sunday–Saturday order.
-    private let orderedDays: [(NotificationWeekday, String)] = [
-        (.sunday,    "S"),
-        (.monday,    "M"),
-        (.tuesday,   "Tu"),
-        (.wednesday, "W"),
-        (.thursday,  "Th"),
-        (.friday,    "F"),
-        (.saturday,  "Sa")
-    ]
-
-    var body: some View {
-        HStack {
-            ForEach(orderedDays, id: \.0) { day, label in
-                Button(label) {
-                    toggle(day)
-                }
-                .padding(6)
-                .frame(maxWidth: .infinity)
-                .background(
-                    selectedDays.contains(day)
-                    ? Color.blue.opacity(0.9)
-                    : Color.gray.opacity(0.25)
-                )
-                .foregroundStyle(
-                    selectedDays.contains(day) ? .white : .primary
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-        }
-    }
-
-    /// Toggles the inclusion of a given weekday in ``selectedDays``.
-    ///
-    /// - Parameter day: The weekday to update.
-    func toggle(_ day: NotificationWeekday) {
-        if selectedDays.contains(day) {
-            selectedDays.remove(day)
-        } else {
-            selectedDays.insert(day)
+            .labeledContentStyle(.vertical)
         }
     }
 }

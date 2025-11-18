@@ -10,7 +10,7 @@ import NotificationManager
 ///
 /// This category omits the snooze action and is intended for one-off notifications with simplified
 /// user choices.
-enum SnoozeCategory: NotificationCategoryDefinition, Sendable {
+enum SnoozeCategory: NotificationCategoryDescriptor, Sendable {
 
     /// A single-use snooze-related notification category.
     case oneOff
@@ -23,7 +23,7 @@ enum SnoozeCategory: NotificationCategoryDefinition, Sendable {
     /// Includes:
     /// - ``DemoAction/open``
     /// - ``DemoAction/cancel``
-    var actions: [NotificationActionDefinition] {
+    var actions: [NotificationActionDescriptor] {
         [
             DemoAction.open,
             DemoAction.cancel

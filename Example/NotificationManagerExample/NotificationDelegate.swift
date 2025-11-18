@@ -61,13 +61,14 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         switch response.actionIdentifier {
 
             case DemoAction.open.id:
+                notificationManager?.removeNotificationBadges()
                 if let id = info["noteID"] as? String {
                     router?.route = .detail(id: id)
                 }
 
             case DemoAction.snooze.id:
                 Task {
-                    let attachment = NotificationAttachmentBuilder.Symbol(
+                    let attachment = NotificationAttachmentBuilder.AttachmentSymbol(
                         "clock.fill",
                         foreground: .red,
                         background: .yellow,
@@ -76,9 +77,11 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
                     await notificationManager?.schedule(
                         id: "snooze-\(UUID().uuidString)",
                         title: "Snoozed Notification",
+                        subtitle: "This is reminder!",
                         body: "This is a snoozed alert.",
                         category: SnoozeCategory.oneOff,
                         type: .timeInterval(duration: .seconds(10), repeats: false),
+                        badge: Int(truncating: response.notification.request.content.badge ?? 0),
                         attachments: [attachment],
                         userInfo: info
                     )

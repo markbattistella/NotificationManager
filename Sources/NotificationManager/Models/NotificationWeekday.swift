@@ -6,118 +6,85 @@
 
 import Foundation
 
-/// A calendar-aware representation of a weekday.
+/// Represents a weekday value used for scheduling calendar-based notifications.
 ///
-/// `NotificationWeekday` wraps the integer-based weekday value used by `DateComponents` and
-/// `UNCalendarNotificationTrigger`, where valid values range from **1 through 7**.
+/// The stored value follows the system convention where Sunday is `1` and Saturday is `7`.
+/// Initialisation enforces that the value is within the valid range.
 ///
-/// The mapping always corresponds to the order of ``Calendar/weekdaySymbols``—that is:
-/// - **1** represents the first symbol (usually Sunday),
-/// - **7** represents the last symbol (usually Saturday).
-///
-/// This ordering is consistent across all calendar systems supported by iOS. Although different
-/// calendars may begin their week on different days, Apple guarantees that weekday indices always
-/// map to the fixed `weekdaySymbols` order.
-///
-/// `NotificationWeekday` provides convenience constants such as ``sunday`` and ``monday`` for
-/// ease of use, along with support for iteration via ``CaseIterable``.
-///
-/// Example:
-/// ```swift
-/// let day = NotificationWeekday(2)
-/// print(day.name) // "Monday" in the current locale
-/// ```
-public struct NotificationWeekday: Hashable, CaseIterable {
+/// This type provides convenient access to the system’s localised weekday names and symbols,
+/// making it suitable for UI display and user-facing scheduling features.
+public struct NotificationWeekday: Hashable {
 
-    /// The 1-based weekday value (1–7), matching `Calendar.weekdaySymbols`.
-    ///
-    /// - Important: Apple guarantees that:
-    ///     - `1` corresponds to `weekdaySymbols[0]` (commonly Sunday)
-    ///     - `7` corresponds to `weekdaySymbols[6]` (commonly Saturday)
-    ///
-    /// This mapping does **not** shift based on locale preferences such as the user's "first
-    /// weekday" setting.
+    /// The integer value of the weekday (1 = Sunday … 7 = Saturday).
     public let value: Int
 
-    /// Creates a new weekday instance using a 1-based weekday index.
+    /// The user’s current autoupdating calendar, used for resolving names.
+    private let calendar = Calendar.autoupdatingCurrent
+
+    /// Creates a weekday from an integer value.
     ///
-    /// - Parameter value: An integer from **1 through 7**.
-    /// - Precondition: The value must be within the allowed range.
-    ///
-    /// Example:
-    /// ```swift
-    /// let weekday = Weekday(3) // Tuesday
-    /// ```
+    /// - Parameter value: The weekday number, where `1...7` are valid.
+    /// - Precondition: The value must be between `1` and `7`.
     public init(_ value: Int) {
         precondition((1...7).contains(value), "Weekday must be between 1 and 7")
         self.value = value
     }
+}
 
-    /// A collection of all weekday values from **1 to 7**, in order.
-    ///
-    /// The sequence corresponds directly to `Calendar.weekdaySymbols`.
+extension NotificationWeekday: CaseIterable {
+
+    /// Returns an array containing all weekdays in order, from Sunday (`1`) through
+    /// Saturday (`7`).
     public static var allCases: [NotificationWeekday] {
         (1...7).map { NotificationWeekday($0) }
     }
 }
 
-// MARK: - Localized Names & Symbols
+extension NotificationWeekday: Identifiable {
+
+    /// A stable identifier for the weekday, matching its integer value (`1` for Sunday … `7`
+    /// for Saturday).
+    public var id: Int { value }
+}
 
 extension NotificationWeekday {
 
-    /// The localized full weekday name.
-    ///
-    /// Examples:
-    /// - `"Sunday"`
-    /// - `"Montag"`
-    /// - `"יום ראשון"`
+    /// The fully localised name of the weekday (e.g. “Monday”).
     public var localizedName: String {
-        Calendar.autoupdatingCurrent.weekdaySymbols[value - 1]
+        calendar.weekdaySymbols[value - 1]
     }
 
-    /// The localized abbreviated symbol (3–letter, locale-specific).
-    ///
-    /// Examples:
-    /// - `"Sun"`
-    /// - `"Mon"`
-    /// - `"So"`
+    /// The short-form localised symbol for the weekday (e.g. “Mon”).
     public var localizedShortSymbol: String {
-        Calendar.autoupdatingCurrent.shortWeekdaySymbols[value - 1]
+        calendar.shortWeekdaySymbols[value - 1]
     }
 
-    /// The localized minimal symbol (often 1–2 letters).
-    ///
-    /// Examples:
-    /// - `"S"`
-    /// - `"M"`
-    /// - `"Su"`
+    /// The very short-form localised symbol for the weekday (e.g. “M”).
     public var localizedVeryShortSymbol: String {
-        Calendar.autoupdatingCurrent.veryShortWeekdaySymbols[value - 1]
+        calendar.veryShortWeekdaySymbols[value - 1]
     }
 }
 
-// MARK: - Convenience static constants
-
 extension NotificationWeekday {
 
-    /// The weekday representing Sunday (`1` in the system calendar).
+    /// The Sunday weekday value (`1`).
     public static var sunday: NotificationWeekday { NotificationWeekday(1) }
 
-    /// The weekday representing Monday (`2` in the system calendar).
+    /// The Monday weekday value (`2`).
     public static var monday: NotificationWeekday { NotificationWeekday(2) }
 
-    /// The weekday representing Tuesday (`3` in the system calendar).
+    /// The Tuesday weekday value (`3`).
     public static var tuesday: NotificationWeekday { NotificationWeekday(3) }
 
-    /// The weekday representing Wednesday (`4` in the system calendar).
+    /// The Wednesday weekday value (`4`).
     public static var wednesday: NotificationWeekday { NotificationWeekday(4) }
 
-    /// The weekday representing Thursday (`5` in the system calendar).
+    /// The Thursday weekday value (`5`).
     public static var thursday: NotificationWeekday { NotificationWeekday(5) }
 
-    /// The weekday representing Friday (`6` in the system calendar).
+    /// The Friday weekday value (`6`).
     public static var friday: NotificationWeekday { NotificationWeekday(6) }
 
-    /// The weekday representing Saturday (`7` in the system calendar).
+    /// The Saturday weekday value (`7`).
     public static var saturday: NotificationWeekday { NotificationWeekday(7) }
 }

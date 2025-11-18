@@ -6,11 +6,11 @@
 
 import NotificationManager
 
-/// Demo actions demonstrating conformance to ``NotificationActionDefinition``.
+/// Demo actions demonstrating conformance to ``NotificationActionDescriptor``.
 ///
 /// Each case represents a user-interactable action that can be attached to a notification category.
-enum DemoAction: NotificationActionDefinition, Sendable {
-    
+enum DemoAction: NotificationActionDescriptor, Sendable {
+
     /// Opens the associated content.
     case open
     
