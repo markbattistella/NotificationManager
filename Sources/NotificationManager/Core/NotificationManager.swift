@@ -6,6 +6,8 @@
 
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 import Foundation
@@ -266,12 +268,18 @@ extension NotificationManager {
     /// - Returns: A ``NotificationCapabilities`` value describing the enabled features.
     public func capabilities() async -> NotificationCapabilities {
         let settings = await center.notificationSettings()
-        
+
+        #if os(macOS)
+        let allowsAnnouncements = false
+        #else
+        let allowsAnnouncements = (settings.announcementSetting == .enabled)
+        #endif
+
         return NotificationCapabilities(
             allowsAlert: settings.alertSetting == .enabled,
             allowsSound: settings.soundSetting == .enabled,
             allowsBadge: settings.badgeSetting == .enabled,
-            allowsAnnouncements: settings.announcementSetting == .enabled,
+            allowsAnnouncements: allowsAnnouncements,
             criticalAlertSupported: settings.criticalAlertSetting == .enabled
         )
     }
@@ -644,12 +652,16 @@ extension NotificationManager {
             content.relevanceScore = relevanceScore
             content.filterCriteria = filterCriteria
             
+            #if os(iOS)
             if let resolvedLaunchImageName {
                 content.launchImageName = resolvedLaunchImageName
             }
+            #endif
+
             if let resolvedThreadIdentifier {
                 content.threadIdentifier = resolvedThreadIdentifier
             }
+
             if let resolvedCategoryIdentifier {
                 content.categoryIdentifier = resolvedCategoryIdentifier
             }
@@ -698,10 +710,10 @@ extension NotificationManager {
                         repeats: repeats
                     )
                     
-#if os(iOS) || os(watchOS)
+                #if (os(iOS) && !targetEnvironment(macCatalyst)) || os(watchOS)
                 case let .location(region, repeats):
                     trigger = UNLocationNotificationTrigger(region: region, repeats: repeats)
-#endif
+                #endif
             }
             
             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)

@@ -4,7 +4,7 @@
 // Website: https://markbattistella.com
 //
 
-#if canImport(AppKit)
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
 import AppKit
 
 extension NSImage {

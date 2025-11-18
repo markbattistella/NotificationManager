@@ -36,8 +36,8 @@ public enum NotificationSound {
     /// - Parameter url: The location of the audio file.
     case fileURL(URL)
 
-    #if os(iOS)
-    /// The system default ringtone sound, available only on iOS.
+    #if os(iOS) && !targetEnvironment(macCatalyst)
+    /// The system default ringtone sound, available only on iOS (not Catalyst).
     case defaultRingtone
     #endif
 }
@@ -69,7 +69,7 @@ public extension NotificationSound {
             case let .fileURL(url):
                 return UNNotificationSound(named: UNNotificationSoundName(url.lastPathComponent))
 
-            #if os(iOS)
+            #if os(iOS) && !targetEnvironment(macCatalyst)
             case .defaultRingtone:
                 return .defaultRingtone
             #endif

@@ -30,7 +30,7 @@ public enum NotificationType {
     ///   - repeats: Indicates whether the trigger repeats on the defined schedule.
     case calendar(weekday: Int?, hour: Int, minute: Int, repeats: Bool)
 
-    #if os(iOS) || os(watchOS)
+    #if (os(iOS) && !targetEnvironment(macCatalyst)) || os(watchOS)
     /// A trigger that fires when the user enters or exits a geographic region.
     ///
     /// - Parameters:

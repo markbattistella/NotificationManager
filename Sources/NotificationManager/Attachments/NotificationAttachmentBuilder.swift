@@ -97,7 +97,7 @@ public enum NotificationAttachmentBuilder {
             }.frame(width: size.width, height: size.height)
 
             let renderer = ImageRenderer(content: view)
-            renderer.scale = UIScreen.main.scale
+            renderer.applyPlatformScale()
 
             guard let cgImage = renderer.cgImage else { return nil }
 
@@ -150,7 +150,7 @@ public enum NotificationAttachmentBuilder {
                 content: view
                     .frame(width: size.width, height: size.height)
             )
-            renderer.scale = UIScreen.main.scale
+            renderer.applyPlatformScale()
 
             guard let cgImage = renderer.cgImage else { return nil }
 
