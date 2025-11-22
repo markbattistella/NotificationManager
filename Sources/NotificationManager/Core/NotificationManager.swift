@@ -61,7 +61,32 @@ public final class NotificationManager {
     public var permissionGranted: Bool {
         authorizationStatus == .authorized || authorizationStatus == .provisional
     }
-    
+
+    /// Returns a high-level representation of the app’s current notification permission state.
+    ///
+    /// This value is derived from ``authorizationStatus`` and provides a simplified, app-friendly
+    /// interpretation of the underlying system status:
+    ///
+    /// This property is intended for UI and business-logic use, providing a consistent
+    /// abstraction over `UNAuthorizationStatus`.
+    public var permissionStatus: PermissionStatus {
+        switch authorizationStatus {
+
+            case .authorized, .provisional:
+                return .authorized
+
+            case .denied:
+                let url = appNotificationSettingsURL()
+                return .denied(url)
+
+            case .notDetermined, .ephemeral:
+                return .notDetermined
+
+            @unknown default:
+                return .error(nil)
+        }
+    }
+
     /// Indicates whether any pending notifications exist for the application.
     ///
     /// This value is updated during refresh operations.
@@ -151,20 +176,20 @@ extension NotificationManager {
     /// This method first refreshes the current authorisation status, then behaves according to
     /// that status:
     /// - If already authorised or provisionally authorised, returns
-    /// ``PermissionRequestResult.authorized``.
-    /// - If denied, returns ``PermissionRequestResult.denied`` with a URL pointing to the
+    /// ``PermissionStatus.authorized``.
+    /// - If denied, returns ``PermissionStatus.denied`` with a URL pointing to the
     /// system’s notification settings.
     /// - If not determined or ephemeral, attempts a new authorisation request and returns either
-    /// ``PermissionRequestResult.authorized`` or ``PermissionRequestResult.denied``.
+    /// ``PermissionStatus.authorized`` or ``PermissionStatus.denied``.
     /// - If an error occurs during the request, sets the status to `.denied`, logs the error, and
-    /// returns ``PermissionRequestResult.error``.
+    /// returns ``PermissionStatus.error``.
     ///
     /// - Parameter options: The notification features being requested. Defaults to alert
     /// permissions.
     /// - Returns: A result value describing the outcome of the authorisation request.
     public func requestAuthorization(
         for options: UNAuthorizationOptions = [.alert]
-    ) async -> PermissionRequestResult {
+    ) async -> PermissionStatus {
         await refreshAuthorizationStatus()
 
         switch authorizationStatus {
