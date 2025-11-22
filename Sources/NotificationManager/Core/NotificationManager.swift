@@ -136,7 +136,7 @@ extension NotificationManager {
     ///
     /// This method updates both the current authorisation status and the presence of pending
     /// notification requests.
-    internal func refreshAll() async {
+    public func refreshAll() async {
         await refreshAuthorizationStatus()
         await refreshPendingState()
     }
