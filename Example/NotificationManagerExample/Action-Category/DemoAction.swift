@@ -37,7 +37,10 @@ enum DemoAction: NotificationActionDescriptor, Sendable {
             case .cancel: return "Cancel"
         }
     }
-    
+
+    /// The icon for the action. None for this demo.
+    var icon: UNNotificationActionIcon? { nil }
+
     /// The behavioural options applied to the action.
     var options: UNNotificationActionOptions {
         switch self {

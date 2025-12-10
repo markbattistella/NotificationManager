@@ -333,7 +333,8 @@ extension NotificationManager {
                     UNNotificationAction(
                         identifier: $0.id,
                         title: String(localized: $0.title),
-                        options: $0.options
+                        options: $0.options,
+                        icon: $0.icon
                     )
                 },
                 intentIdentifiers: [],
