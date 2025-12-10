@@ -514,6 +514,7 @@ extension NotificationManager {
                 filterCriteria: filterCriteria,
                 threadIdentifier: threadIdentifier
             )
+            logger.info("Scheceduled repeating reminder with ID: \(notificationID)")
         }
     }
 }

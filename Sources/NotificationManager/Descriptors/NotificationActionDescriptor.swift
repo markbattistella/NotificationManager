@@ -6,30 +6,37 @@
 
 import Foundation
 
-/// Describes an action that can be included in a custom notification category.
+/// A descriptor used to define an action that can appear in a custom notification category.
 ///
-/// Conforming types define the identifier, display title, and behaviour options for an action
-/// shown within a delivered notification. These actions appear in the system notification
-/// interface and allow the user to respond directly.
+/// Types conforming to this protocol describe the properties needed to construct a
+/// ``UNNotificationAction`` when registering notification categories. Each action specifies
+/// an identifier, a user-facing title, optional iconography, and behaviour options that
+/// determine how the system presents and handles the action within a delivered notification.
 ///
-/// Each descriptor is transformed into a ``UNNotificationAction`` when registering notification
-/// categories.
-///
-/// Conform to this protocol when creating custom notification actions.
+/// Conform to this protocol to create custom actions that allow users to respond directly
+/// from the system notification interface.
 public protocol NotificationActionDescriptor {
 
-    /// The unique identifier for the action.
+    /// A unique identifier for the action.
     ///
-    /// This value is used to differentiate actions when handling user responses.
+    /// Use this value to distinguish the action when handling a user's response in your app.
     var id: String { get }
 
-    /// The user-visible title displayed for the action.
+    /// The title displayed for the action in the notification interface.
     ///
-    /// This value supports localisation.
+    /// Provide a value that supports localisation to ensure the action is presented correctly
+    /// across different languages.
     var title: LocalizedStringResource { get }
 
-    /// Option flags that define the behaviour of the action, such as whether it requires
-    /// authentication or performs a destructive operation.
+    /// An optional icon displayed alongside the action.
+    ///
+    /// Use an ``UNNotificationActionIcon`` to supply an SF Symbol or image that provides
+    /// additional visual context for the action. If `nil`, no icon is shown.
+    var icon: UNNotificationActionIcon? { get }
+
+    /// Behaviour options that define how the action operates.
+    ///
+    /// These flags determine characteristics such as whether the action launches the app,
+    /// requires authentication, or represents a destructive operation.
     var options: UNNotificationActionOptions { get }
 }
-

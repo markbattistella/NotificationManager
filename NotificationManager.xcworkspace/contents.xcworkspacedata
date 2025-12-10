@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Example/NotificationManagerExample.xcodeproj">
+location = "group:Example/NotificationManagerExample.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:">
