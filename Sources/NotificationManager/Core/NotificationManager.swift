@@ -24,36 +24,36 @@ import DefaultsKit
 @MainActor
 @Observable
 public final class NotificationManager {
-    
+
     // MARK: Non-observed
-    
+
     /// The system notification centre used to query and manage notification settings.
     @ObservationIgnored
     private let center = UNUserNotificationCenter.current()
-    
+
     /// Logger used for recording push-notification–related events.
     @ObservationIgnored
     private let logger = SimpleLogger(category: .pushNotifications)
-    
+
     /// User defaults storage for persisting notification-related values.
     @ObservationIgnored
     private let defaults = UserDefaults.notification
-    
+
     /// A task used to perform the initial state refresh when the manager is created.
     @ObservationIgnored
     private var initialRefreshTask: Task<Void, Never>?
-    
+
     /// A task used to perform state refreshes whenever the app enters the foreground.
     @ObservationIgnored
     private var foregroundRefreshTask: Task<Void, Never>?
-    
+
     // MARK: Observed
-    
+
     /// The current notification authorisation status for the application.
     ///
     /// This value is updated during refresh operations.
     public var authorizationStatus: UNAuthorizationStatus = .notDetermined
-    
+
     /// Indicates whether the user has granted notification permissions.
     ///
     /// This returns `true` when the authorisation status is either `.authorized` or
@@ -91,9 +91,9 @@ public final class NotificationManager {
     ///
     /// This value is updated during refresh operations.
     public var hasPendingNotifications: Bool = false
-    
+
     // MARK: Initialiser
-    
+
     /// Creates a new notification manager, registers for foreground-activation notifications,
     /// and triggers an initial refresh of notification state.
     public init() {
@@ -116,20 +116,20 @@ public final class NotificationManager {
         )
 
         #endif
-        
+
         initialRefreshTask = Task { [weak self] in
             guard let self else { return }
             await self.refreshAll()
         }
     }
-    
+
     /// Cancels any active refresh tasks and removes the activity observer.
     deinit {
         initialRefreshTask?.cancel()
         foregroundRefreshTask?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
-    
+
     /// Called when the application becomes active.
     ///
     /// Cancels any in-progress foreground refresh and starts a new refresh task.
@@ -146,7 +146,7 @@ public final class NotificationManager {
 // MARK: - Internals
 
 extension NotificationManager {
-    
+
     /// Refreshes the state indicating whether any pending notification requests exist.
     ///
     /// This method queries the system for all pending notification requests and updates
@@ -155,7 +155,7 @@ extension NotificationManager {
         let pending = await pendingNotifications()
         hasPendingNotifications = !pending.isEmpty
     }
-    
+
     /// Performs a full refresh of all notification-related state managed by
     /// ``NotificationManager``.
     ///
@@ -243,7 +243,7 @@ extension NotificationManager {
         let settings = await center.notificationSettings()
         self.authorizationStatus = settings.authorizationStatus
     }
-    
+
     /// Returns the system URL for the application's notification settings page.
     ///
     /// The exact URL depends on the platform:
@@ -267,13 +267,13 @@ extension NotificationManager {
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             preconditionFailure("Missing bundle identifier")
         }
-        
+
         let urlString = "x-apple.systempreferences:com.apple.preference.notifications?\(bundleID)"
-        
+
         guard let url = URL(string: urlString) else {
             preconditionFailure("Invalid macOS notification settings URL")
         }
-        
+
         return url
 
         #endif
@@ -283,7 +283,7 @@ extension NotificationManager {
 // MARK: - Notification Capabilities
 
 extension NotificationManager {
-    
+
     /// Returns the app’s effective notification capabilities based on the current system
     /// notification settings.
     ///
@@ -314,10 +314,10 @@ extension NotificationManager {
 // MARK: - Category Registration
 
 extension NotificationManager {
-    
+
     /// Registers the specified notification categories with the system.
     ///
-    /// Each ``NotificationCategoryDescriptor`` is converted into a ``UNNotificationCategory``
+    /// Each ``NotificationCategoryDescriptor`` is converted into a `UNNotificationCategory`
     /// with its associated actions. The resulting set replaces all previously registered
     /// categories for the application.
     ///
@@ -341,7 +341,7 @@ extension NotificationManager {
                 options: category.options
             )
         }
-        
+
         center.setNotificationCategories(Set(mapped))
         logger.info("Registered \(categories.count) notification categories")
     }
@@ -350,7 +350,7 @@ extension NotificationManager {
 // MARK: - Standard Notifications
 
 extension NotificationManager {
-    
+
     /// Schedules a local notification with the specified content and delivery configuration.
     ///
     /// Before scheduling, this method refreshes the current authorisation status and verifies
@@ -403,14 +403,14 @@ extension NotificationManager {
         filterCriteria: String? = nil,
         threadIdentifier: String? = nil
     ) async -> Result<Void, Error> {
-        
+
         await refreshAuthorizationStatus()
-        
+
         guard permissionGranted else {
             logger.warning("Notification not scheduled: permission not granted.")
             return .failure(NotificationError.permissionDenied)
         }
-        
+
         return await _schedule(
             id: id,
             title: title,
@@ -435,7 +435,7 @@ extension NotificationManager {
 // MARK: - Repeating Notifications
 
 extension NotificationManager {
-    
+
     /// Schedules a repeating notification for the specified days and time.
     ///
     /// This method refreshes the current authorisation status and verifies that the app has
@@ -488,13 +488,13 @@ extension NotificationManager {
         filterCriteria: String? = nil,
         threadIdentifier: String? = nil
     ) async {
-        
+
         await refreshAuthorizationStatus()
         guard permissionGranted else {
             logger.warning("Repeating reminder not scheduled: permission not granted.")
             return
         }
-        
+
         for day in days {
             let notificationID = "\(id)_\(day.value)"
             await _schedule(
@@ -515,7 +515,7 @@ extension NotificationManager {
                 filterCriteria: filterCriteria,
                 threadIdentifier: threadIdentifier
             )
-            logger.info("Scheceduled repeating reminder with ID: \(notificationID)")
+            logger.info("Scheduled repeating reminder with ID: \(notificationID)")
         }
     }
 }
@@ -523,7 +523,7 @@ extension NotificationManager {
 // MARK: - Inactive Notifications
 
 extension NotificationManager {
-    
+
     /// Schedules an inactivity reminder after a specified period of time has elapsed since the
     /// app was last opened.
     ///
@@ -559,22 +559,22 @@ extension NotificationManager {
         attachments: [NotificationAttachmentFactory] = [],
         userInfo: [AnyHashable : Any] = [:]
     ) async {
-        
+
         await refreshAuthorizationStatus()
         guard permissionGranted else {
             logger.warning("Inactivity reminder not scheduled: permission not granted.")
             return
         }
-        
+
         defaults.set(
             Date.now,
             for: NotificationsUserDefaultsKey.appLastOpened
         )
-        
+
         let inactivityReminderId = "com.markbattistella.package.notificationManager.inactivityReminder"
-        
+
         removePendingNotification(id: inactivityReminderId)
-        
+
         await _schedule(
             id: inactivityReminderId,
             title: title,
@@ -589,7 +589,7 @@ extension NotificationManager {
         )
         logger.info("Scheduled inactivity reminder with interval=\(duration.timeInterval), id=\(inactivityReminderId)")
     }
-    
+
     /// Records that the app has been opened by updating the “last opened” timestamp stored in
     /// user defaults.
     ///
@@ -602,7 +602,7 @@ extension NotificationManager {
 // MARK: - Internal Scheduling
 
 extension NotificationManager {
-    
+
     /// Builds and schedules a local notification request using the specified content and
     /// trigger configuration.
     ///
@@ -658,12 +658,12 @@ extension NotificationManager {
         filterCriteria: String? = nil,
         threadIdentifier: String? = nil
     ) async -> Result<Void, Error> {
-        
+
         let resolvedSound = sound.value
         let resolvedLaunchImageName = launchImageName
         let resolvedThreadIdentifier = threadIdentifier
         let resolvedCategoryIdentifier = category?.id
-        
+
         let requestResult = await Task { () -> Result<UNNotificationRequest, Error> in
             let content = UNMutableNotificationContent()
             content.title = title
@@ -676,7 +676,7 @@ extension NotificationManager {
             content.targetContentIdentifier = targetContentIdentifier
             content.relevanceScore = relevanceScore
             content.filterCriteria = filterCriteria
-            
+
             #if os(iOS)
             if let resolvedLaunchImageName {
                 content.launchImageName = resolvedLaunchImageName
@@ -690,14 +690,14 @@ extension NotificationManager {
             if let resolvedCategoryIdentifier {
                 content.categoryIdentifier = resolvedCategoryIdentifier
             }
-            
+
             let compiledAttachments: [UNNotificationAttachment] = await withTaskGroup(
                 of: UNNotificationAttachment?.self
             ) { group in
                 for item in attachments {
                     group.addTask { await item.makeAttachment() }
                 }
-                
+
                 var results: [UNNotificationAttachment] = []
                 for await attachment in group {
                     if let attachment {
@@ -706,50 +706,50 @@ extension NotificationManager {
                 }
                 return results
             }
-            
+
             if !compiledAttachments.isEmpty {
                 content.attachments = compiledAttachments
             }
-            
+
             let trigger: UNNotificationTrigger
-            
+
             switch type {
                 case let .timeInterval(duration, repeats):
                     let rawSeconds = duration.timeInterval
                     let seconds = max(rawSeconds, repeats ? 60 : 0.1)
-                    
+
                     let finalTrigger = UNTimeIntervalNotificationTrigger(
                         timeInterval: seconds,
                         repeats: repeats
                     )
                     trigger = finalTrigger
-                    
+
                 case let .calendar(weekday, hour, minute, repeats):
                     var comps = DateComponents()
                     comps.hour = hour
                     comps.minute = minute
                     comps.weekday = weekday
-                    
+
                     trigger = UNCalendarNotificationTrigger(
                         dateMatching: comps,
                         repeats: repeats
                     )
-                    
+
                 #if (os(iOS) && !targetEnvironment(macCatalyst)) || os(watchOS)
                 case let .location(region, repeats):
                     trigger = UNLocationNotificationTrigger(region: region, repeats: repeats)
                 #endif
             }
-            
+
             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
             return .success(request)
         }.value
-        
+
         switch requestResult {
             case .failure(let error):
                 logger.error("Failed to build notification: \(error.localizedDescription)")
                 return .failure(error)
-                
+
             case .success(let request):
                 do {
                     try await center.add(request)
@@ -766,15 +766,15 @@ extension NotificationManager {
 // MARK: - Querying Notifications
 
 extension NotificationManager {
-    
+
     /// Returns all pending notification requests scheduled for the application.
     ///
-    /// - Returns: An array of ``UNNotificationRequest`` values representing all unsatisfied
+    /// - Returns: An array of `UNNotificationRequest` values representing all unsatisfied
     /// scheduled notifications.
     public func pendingNotifications() async -> [UNNotificationRequest] {
         await center.pendingNotificationRequests()
     }
-    
+
     /// Returns all pending notifications whose identifiers begin with the specified prefix.
     ///
     /// This is useful when scheduling families of related notifications, such as repeating
@@ -786,17 +786,17 @@ extension NotificationManager {
         let all = await pendingNotifications()
         return all.filter { $0.identifier.hasPrefix(prefix) }
     }
-    
+
     /// Returns all delivered notifications retained by the system.
     ///
     /// Delivered notifications remain available until cleared by the user or removed through
     /// notification centre APIs.
     ///
-    /// - Returns: An array of delivered ``UNNotification`` instances.
+    /// - Returns: An array of delivered `UNNotification` instances.
     public func deliveredNotifications() async -> [UNNotification] {
         await center.deliveredNotifications()
     }
-    
+
     /// Indicates whether a notification with the specified identifier is currently scheduled.
     ///
     /// - Parameter id: The identifier of the notification to check.
@@ -805,7 +805,7 @@ extension NotificationManager {
         let pending = await pendingNotifications()
         return pending.contains { $0.identifier == id }
     }
-    
+
     /// Returns the current state of a notification with the given identifier.
     ///
     /// The result describes whether the notification is pending, has been delivered, and includes
@@ -816,10 +816,10 @@ extension NotificationManager {
     public func notificationState(id: String) async -> NotificationState {
         let allPending = await pendingNotifications()
         let allDelivered = await deliveredNotifications()
-        
+
         let pendingRequest = allPending.first { $0.identifier == id }
         let deliveredNotification = allDelivered.first { $0.request.identifier == id }
-        
+
         return NotificationState(
             isPending: pendingRequest != nil,
             isDelivered: deliveredNotification != nil,
@@ -827,7 +827,7 @@ extension NotificationManager {
             delivered: deliveredNotification
         )
     }
-    
+
     /// Returns the next scheduled trigger date for the notification with the given identifier.
     ///
     /// This inspects the underlying trigger and returns its computed next trigger date for both
@@ -842,13 +842,13 @@ extension NotificationManager {
               let trigger = request.trigger else {
             return nil
         }
-        
+
         if let calendarTrigger = trigger as? UNCalendarNotificationTrigger {
             return calendarTrigger.nextTriggerDate()
         } else if let timeIntervalTrigger = trigger as? UNTimeIntervalNotificationTrigger {
             return timeIntervalTrigger.nextTriggerDate()
         }
-        
+
         return nil
     }
 }
@@ -856,7 +856,7 @@ extension NotificationManager {
 // MARK: - Removing Notifications
 
 extension NotificationManager {
-    
+
     /// Removes a single pending notification with the specified identifier.
     ///
     /// After removal, a log entry is recorded indicating the identifier that was cleared.
@@ -866,7 +866,7 @@ extension NotificationManager {
         center.removePendingNotificationRequests(withIdentifiers: [id])
         logger.info("Removed pending notification: \(id)")
     }
-    
+
     /// Removes all pending notifications whose identifiers begin with the specified prefix.
     ///
     /// This is commonly used for grouped or repeating notifications that share a naming pattern.
@@ -880,7 +880,7 @@ extension NotificationManager {
         center.removePendingNotificationRequests(withIdentifiers: ids)
         logger.info("Removed \(ids.count) notifications matching prefix: \(prefix)")
     }
-    
+
     /// Removes pending weekday-based notifications generated from a common base identifier.
     ///
     /// This method constructs the derived identifiers used when scheduling repeating weekday
@@ -894,7 +894,7 @@ extension NotificationManager {
         center.removePendingNotificationRequests(withIdentifiers: ids)
         logger.info("Removed \(ids.count) weekday notifications for id: \(id)")
     }
-    
+
     /// Removes all pending notifications scheduled for the application.
     ///
     /// A log entry is recorded after removal.
@@ -902,7 +902,7 @@ extension NotificationManager {
         center.removeAllPendingNotificationRequests()
         logger.info("Removed all pending notifications")
     }
-    
+
     /// Removes a delivered notification with the specified identifier.
     ///
     /// - Parameter id: The identifier of the delivered notification to remove.
@@ -910,7 +910,7 @@ extension NotificationManager {
         center.removeDeliveredNotifications(withIdentifiers: [id])
         logger.info("Removed delivered notification: \(id)")
     }
-    
+
     /// Removes all delivered notifications retained by the system.
     ///
     /// A log entry is recorded after completion.

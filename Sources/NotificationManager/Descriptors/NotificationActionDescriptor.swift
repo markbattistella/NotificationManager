@@ -9,7 +9,7 @@ import Foundation
 /// A descriptor used to define an action that can appear in a custom notification category.
 ///
 /// Types conforming to this protocol describe the properties needed to construct a
-/// ``UNNotificationAction`` when registering notification categories. Each action specifies
+/// `UNNotificationAction` when registering notification categories. Each action specifies
 /// an identifier, a user-facing title, optional iconography, and behaviour options that
 /// determine how the system presents and handles the action within a delivered notification.
 ///
@@ -30,7 +30,7 @@ public protocol NotificationActionDescriptor {
 
     /// An optional icon displayed alongside the action.
     ///
-    /// Use an ``UNNotificationActionIcon`` to supply an SF Symbol or image that provides
+    /// Use a `UNNotificationActionIcon` to supply an SF Symbol or image that provides
     /// additional visual context for the action. If `nil`, no icon is shown.
     var icon: UNNotificationActionIcon? { get }
 

@@ -10,7 +10,7 @@ import SwiftUI
 /// views, and system symbols.
 ///
 /// Each builder conforms to ``NotificationAttachmentFactory`` and produces a
-/// ``UNNotificationAttachment`` suitable for inclusion in a notification request.
+/// `UNNotificationAttachment` suitable for inclusion in a notification request.
 public enum NotificationAttachmentBuilder {
 
     #if canImport(UIKit)

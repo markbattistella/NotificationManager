@@ -8,7 +8,7 @@ import Foundation
 
 /// A factory protocol for producing notification attachments asynchronously.
 ///
-/// Conforming types encapsulate the logic required to generate a ``UNNotificationAttachment``.
+/// Conforming types encapsulate the logic required to generate a `UNNotificationAttachment`.
 /// Attachments are created at scheduling time and applied to the notification content if
 /// successfully produced.
 ///
@@ -18,7 +18,7 @@ public protocol NotificationAttachmentFactory {
 
     /// Creates and returns a notification attachment.
     ///
-    /// - Returns: A ``UNNotificationAttachment`` if creation succeeds, or `nil` if the attachment
+    /// - Returns: A `UNNotificationAttachment` if creation succeeds, or `nil` if the attachment
     /// cannot be generated.
     func makeAttachment() async -> UNNotificationAttachment?
 }
