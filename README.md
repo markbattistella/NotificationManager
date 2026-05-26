@@ -27,11 +27,19 @@ Add `NotificationManager` to your Swift project using Swift Package Manager:
 
 ```swift
 dependencies: [
-  .package(url: "https://github.com/markbattistella/NotificationManager", from: "1.0.0")
+  .package(url: "https://github.com/markbattistella/NotificationManager", from: "26.3.8")
 ]
 ```
 
 Alternatively, add it using Xcode via `File > Add Packages` and entering the package repository URL.
+
+## Requirements
+
+- Swift 6.0+
+- iOS 17+
+- macOS 14+
+- Mac Catalyst 17+
+- visionOS 1+
 
 ## Setup
 
@@ -98,9 +106,12 @@ await notifier.schedule(
   id: "demo",
   title: "Hello",
   body: "This is a test",
-  type: .timeInterval(duration: .seconds(5), repeats: false)
+  type: .timeInterval(duration: .seconds(5), repeats: false),
+  badge: nil
 )
 ```
+
+Omit `badge` or pass `nil` when the notification should not change the app badge.
 
 ### Calendar-based (daily at a fixed time)
 

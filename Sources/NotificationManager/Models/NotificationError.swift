@@ -11,22 +11,22 @@ import Foundation
 ///
 /// Use this type to distinguish between different notification-related failure conditions and
 /// present appropriate messaging to the user when needed.
-public enum NotificationError: Error {
+public enum NotificationError: Error, Sendable {
 
-    /// Indicates that a notification operation failed because the user has not granted the
-    /// required notification permissions.
-    case permissionDenied
+  /// Indicates that a notification operation failed because the user has not granted the
+  /// required notification permissions.
+  case permissionDenied
 }
 
 extension NotificationError: LocalizedError {
 
-    /// A human-readable description of the error.
-    ///
-    /// This value is suitable for displaying to the user in error alerts or logs.
-    public var errorDescription: String? {
-        switch self {
-            case .permissionDenied:
-                return String(localized: "Notification permission has not been granted.")
-        }
+  /// A human-readable description of the error.
+  ///
+  /// This value is suitable for displaying to the user in error alerts or logs.
+  public var errorDescription: String? {
+    switch self {
+    case .permissionDenied:
+      return String(localized: "Notification permission has not been granted.")
     }
+  }
 }

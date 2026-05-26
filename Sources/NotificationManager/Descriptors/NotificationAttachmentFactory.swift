@@ -14,11 +14,12 @@ import Foundation
 ///
 /// Implement this protocol when you need to attach images, files, or other media to a notification
 /// request.
+@MainActor
 public protocol NotificationAttachmentFactory {
 
-    /// Creates and returns a notification attachment.
-    ///
-    /// - Returns: A `UNNotificationAttachment` if creation succeeds, or `nil` if the attachment
-    /// cannot be generated.
-    func makeAttachment() async -> UNNotificationAttachment?
+  /// Creates and returns a notification attachment.
+  ///
+  /// - Returns: A `UNNotificationAttachment` if creation succeeds, or `nil` if the attachment
+  /// cannot be generated.
+  func makeAttachment() async -> UNNotificationAttachment?
 }

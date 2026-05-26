@@ -99,6 +99,9 @@
 				Base,
 			);
 			mainGroup = A337615C2EC59A8B00FDCE11;
+			packageReferences = (
+				A33761762EC59AB900FDCE11 /* XCLocalSwiftPackageReference ".." */,
+			);
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A33761662EC59A8B00FDCE11 /* Products */;
@@ -357,9 +360,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A33761762EC59AB900FDCE11 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A33761742EC59AB900FDCE11 /* NotificationManager */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = A33761762EC59AB900FDCE11 /* XCLocalSwiftPackageReference ".." */;
 			productName = NotificationManager;
 		};
 /* End XCSwiftPackageProductDependency section */
